@@ -1,0 +1,199 @@
+---
+title: "El Nino"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r packages requires for data analysis}
+library(mice)
+library(tidyverse)
+library(hrbrthemes)
+library(viridis)
+library(ggplot2)
+library(dplyr)
+library(ggridges)
+```
+
+```{r El Nino dataset}
+# reading in the column names
+ElNinocol <- read.csv("tao-all2.col", header=FALSE)
+
+# reading in the dataset
+ElNino <- read.table("tao-all2.dat", na.strings='.', col.names=c("obs","year","month","day","date","latitude","longitude","zon.winds","mer.winds","humidity","air temp","s.s.temp"))
+```
+
+```{r date variable}
+# creating date variable from year, month and day variables in dataset
+ElNino$date = as.character(ElNino$date)
+ElNino$date = as.Date(ElNino$date, "%y%m%d")
+ElNino
+```
+
+```{r missing data}
+# removing all rows with missing data
+ElNino2 = ElNino %>%
+  na.omit()
+```
+
+
+```{r year variable}
+# setting year variable as categorical
+ElNino2$year <- as.factor(ElNino2$year)
+```
+
+
+```{r ridgeline plot for air temperature across 1989-1998}
+ggp = ggplot(ElNino2, aes(x = `air.temp`, y = year, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "Air Temp", option = "C") +
+  labs(title = 'Air Temperatures for El Nino') +
+  theme_ipsum() +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+ggp
+```
+
+```{r ridgeline plot for sea temperature across 1989-1998}
+ggp2 = ggplot(ElNino2, aes(x = `s.s.temp`, y = year, fill = ..x..)) +
+  geom_density_ridges_gradient(scale = 3, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "Sea Temp", option = "C") +
+  labs(title = 'Sea Temperatures for El Nino') +
+  theme_ipsum() +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    )
+ggp2
+```
+
+```{r boxplots for air temperature across 1989-1998}
+ElNino2 %>%
+  ggplot( aes(x=as.factor(year), y=air.temp, fill=as.factor(year))) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Boxplots for air temp") +
+    xlab("")
+```
+
+```{r violin chart for air temperature across 1989-1998}
+ElNino2 %>%
+  ggplot( aes(x=as.factor(year), y=air.temp, fill=as.factor(year))) +
+    geom_violin() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Violin chart for air temp") +
+    xlab("year")
+```
+
+```{r violin chart for sea temperature across 1989-1998}
+ElNino2 %>%
+  ggplot( aes(x=as.factor(year), y=s.s.temp, fill=as.factor(year))) +
+    geom_violin() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Violin chart for sea temp") +
+    xlab("year") +
+  ylab("sea temp")
+```
+
+```{r separating dataset into several datasets based on year}
+nino89 <- ElNino2[ElNino2$year==89,]
+nino90 <- ElNino2[ElNino2$year==90,]
+nino91 <- ElNino2[ElNino2$year==91,]
+nino92 <- ElNino2[ElNino2$year==92,]
+nino93 <- ElNino2[ElNino2$year==93,]
+nino94 <- ElNino2[ElNino2$year==94,]
+nino95 <- ElNino2[ElNino2$year==95,]
+nino96 <- ElNino2[ElNino2$year==96,]
+nino97 <- ElNino2[ElNino2$year==97,]
+```
+
+
+```{r first map of buoys for air temperature in 1991}
+library(leaflet)
+
+colours <- c("blue","red")
+pal <- colorFactor(colours, nino91$air.temp)
+leaflet()%>%addTiles()  %>% addCircleMarkers(data=nino91, lat= ~latitude, lng= ~longitude, radius= ~1, color = ~pal(air.temp))
+```
+
+
+```{r improved map of buoys for air temperature in 1991}
+# creating subset of all data rows in 1991
+nino91 <- ElNino2[ElNino2$year==91,]
+
+library(leaflet)
+
+# A colour palette was created in order to colour code air temperature
+mybins <- seq(20, 30, by=2)
+mypalette <- colorBin( palette="YlOrBr", domain=nino91$air.temp, na.color="transparent", bins=mybins)
+
+
+mytext <- paste(
+   "Latitude: ", nino91$latitude, "<br/>", 
+   "Longitude: ", nino91$longitude, "<br/>", 
+   "Air temp: ", nino91$air.temp, sep="") %>%
+  lapply(htmltools::HTML)
+
+# Final Map
+m <- leaflet(nino91) %>% 
+  addTiles()  %>% 
+  addProviderTiles("Esri.WorldImagery") %>%
+  addCircleMarkers(lng=~longitude, lat=~latitude, 
+    fillColor = ~mypalette(air.temp), fillOpacity = 0.9, color="white", radius=4, stroke=FALSE,
+    label = mytext,
+    labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+  ) %>%
+  addLegend( pal=mypalette, values=~air.temp, opacity=0.9, title = "Air temp", position = "bottomright" )
+
+m
+```
+
+```{r map of buoys for sea temperature in 1991}
+library(leaflet)
+
+# A colour palette was created so to colour code sea temperature
+mybins <- seq(20, 32, by=2)
+mypalette <- colorBin( palette="YlOrBr", domain=nino91$s.s.temp, na.color="transparent", bins=mybins)
+
+
+mytext <- paste(
+   "Latitude: ", nino91$latitude, "<br/>", 
+   "Longitude: ", nino91$longitude, "<br/>", 
+   "Sea temp: ", nino91$s.s.temp, sep="") %>%
+  lapply(htmltools::HTML)
+
+# Final Map
+m <- leaflet(nino91) %>% 
+  addTiles()  %>% 
+  addProviderTiles("Esri.WorldImagery") %>%
+  addCircleMarkers(lng=~longitude, lat=~latitude, 
+    fillColor = ~mypalette(s.s.temp), fillOpacity = 0.9, color="white", radius=4, stroke=FALSE,
+    label = mytext,
+    labelOptions = labelOptions( style = list("font-weight" = "normal", padding = "3px 8px"), textsize = "13px", direction = "auto")
+  ) %>%
+  addLegend( pal=mypalette, values=~s.s.temp, opacity=0.9, title = "Sea temp", position = "bottomright" )
+
+m
+```
+
