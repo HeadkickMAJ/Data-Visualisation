@@ -1,0 +1,203 @@
+---
+title: "Algerian Forest Fires"
+author: "Michael Jones"
+date: "14/01/2022"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r reading dataset of Algerian forest fires in the regions of Bejaja and Sidi Bel-abbes}
+forest <- read.csv("Algerian_forest_fires_dataset_UPDATE.csv")
+```
+
+```{r creating subsets for the two regions}
+Bejaia = forest[c(1:122),]
+SidiBelabbes = forest[c(126:247),]
+```
+
+```{r creating date variable}
+Bejaia$date <- as.Date(with(Bejaia, paste(year, month, day,sep="-")), "%Y-%m-%d")
+SidiBelabbes$date <- as.Date(with(SidiBelabbes, paste(year, month, day,sep="-")), "%Y-%m-%d")
+```
+
+
+```{r setting all of the variables in the data to numeric}
+Bejaia$Temperature <- as.numeric(Bejaia$Temperature)
+Bejaia$RH <- as.numeric(Bejaia$RH)
+Bejaia$Ws <- as.numeric(Bejaia$Ws)
+Bejaia$Rain <- as.numeric(Bejaia$Rain)
+Bejaia$FFMC <- as.numeric(Bejaia$FFMC)
+Bejaia$DMC<- as.numeric(Bejaia$DMC)
+Bejaia$DC <- as.numeric(Bejaia$DC)
+Bejaia$ISI <- as.numeric(Bejaia$ISI)
+Bejaia$BUI <- as.numeric(Bejaia$BUI)
+Bejaia$FWI <- as.numeric(Bejaia$FWI)
+
+SidiBelabbes$Temperature <- as.numeric(SidiBelabbes$Temperature)
+SidiBelabbes$RH <- as.numeric(SidiBelabbes$RH)
+SidiBelabbes$Ws <- as.numeric(SidiBelabbes$Ws)
+SidiBelabbes$Rain <- as.numeric(SidiBelabbes$Rain)
+SidiBelabbes$FFMC <- as.numeric(SidiBelabbes$FFMC)
+SidiBelabbes$DMC<- as.numeric(SidiBelabbes$DMC)
+SidiBelabbes$DC <- as.numeric(SidiBelabbes$DC)
+SidiBelabbes$ISI <- as.numeric(SidiBelabbes$ISI)
+SidiBelabbes$BUI <- as.numeric(SidiBelabbes$BUI)
+SidiBelabbes$FWI <- as.numeric(SidiBelabbes$FWI)
+```
+
+```{r attaching packages required for data analysis}
+library(tidyverse)
+library(hrbrthemes)
+library(plotly)
+library(patchwork)
+library(babynames)
+library(viridis)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+```
+
+```{r line graph of temperatures by date across both regions}
+plot(Bejaia$date, Bejaia$Temperature, type='l', xlab='Date',ylab='Temperature', col='red', ylim=c(20,45))
+lines(SidiBelabbes$date, SidiBelabbes$Temperature, col='blue')
+legend("topleft", legend=c("Bejaia","Sidi Bel-abbes"), col=c("red","blue"), lwd=3)
+title("Temperature of both regions")
+```
+
+```{r creating a classification variable for forest fires}
+Bejaia$Classes <- as.factor(Bejaia$Classes)
+SidiBelabbes$Classes <- as.factor(SidiBelabbes$Classes)
+classBej <- Bejaia$Classes
+classSid <- SidiBelabbes$Classes
+```
+
+
+```{r scatter plot of Bejaja temperature against forest fires}
+ggplot(Bejaia, aes(x=date, y=Temperature, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Bejaia temperatures and fire occurances") +
+    theme_ipsum()
+```
+
+```{r scatter plot of Sidi Bel-abbes temperature against fire classifier}
+ggplot(SidiBelabbes, aes(x=date, y=Temperature, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Sidi Bel-abbes temperatures and fire occurances") +
+    theme_ipsum()
+```
+
+```{r violin chart for relative humidity in Bejaja }
+Bejaia %>%
+  ggplot( aes(x=Classes, y=RH, fill=Classes)) +
+    geom_violin() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Relative humidity for Bejaia") +
+    xlab("Class")
+```
+
+```{r violin chart for relative humidity in Sidi Bel-abbes}
+SidiBelabbes %>%
+  ggplot( aes(x=Classes, y=RH, fill=Classes)) +
+    geom_violin() +
+    scale_fill_viridis(discrete = TRUE, alpha=0.6, option="A") +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Relative humidity for Sidi Bel-abbes") +
+    xlab("Class")
+```
+
+```{r scatter plot of Bejaja Build up Index against fire classifier}
+ggplot(Bejaia, aes(x=date, y=BUI, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Bejaia build up index") +
+    theme_ipsum()
+```
+
+
+```{r scatter plot of Sidi Bel-abbes Build up Index against fire classifier}
+ggplot(SidiBelabbes, aes(x=date, y=BUI, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Sidi Bel-abbes build up index") +
+    theme_ipsum()
+```
+
+```{r boxplot of Bejaja Build up Index against fire classifier}
+Bejaia %>%
+  ggplot( aes(x=Classes, y=BUI, fill=Classes)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Bejaia build up index") +
+    xlab("")
+```
+
+```{r boxplot of Sidi Bel-abbes Build up Index against fire classifier}
+SidiBelabbes %>%
+  ggplot( aes(x=Classes, y=BUI, fill=Classes)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Sidi Bel-abbes build up index") +
+    xlab("")
+```
+
+```{r scatter plot of Bejaja Fire weather Index against fire classifier}
+ggplot(Bejaia, aes(x=date, y=FWI, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Bejaia Fire weather index") +
+    theme_ipsum()
+```
+
+```{r scatter plot of Sidi Bel-abbes Fire weather Index against fire classifier}
+ggplot(SidiBelabbes, aes(x=date, y=FWI, color=Classes)) + 
+    geom_point(size=2) +
+    labs(title = "Sidi Bel-addes Fire weather index") +
+    theme_ipsum()
+```
+
+```{r boxplot of Bejaja Fire weather Index against fire classifier}
+Bejaia %>%
+  ggplot( aes(x=Classes, y=FWI, fill=Classes)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Bejaia fire weather index") +
+    xlab("")
+```
+
+```{r boxplot of Sidi Bel-abbes Fire weather Index against fire classifier}
+SidiBelabbes %>%
+  ggplot( aes(x=Classes, y=FWI, fill=Classes)) +
+    geom_boxplot() +
+    scale_fill_viridis(discrete = TRUE) +
+    theme_ipsum() +
+    theme(
+      legend.position="none",
+      plot.title = element_text(size=11)
+    ) +
+    ggtitle("Sidi Bel-abbes fire system index") +
+    xlab("")
+```
