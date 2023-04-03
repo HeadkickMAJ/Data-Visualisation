@@ -1,4 +1,4 @@
-# Data-Analytics
+# Data-Visualisation-and-Analytics
 Investigation of Multivariate Datasets
 
 
